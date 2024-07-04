@@ -22,7 +22,7 @@ namespace EmployeeManagementApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Employee>>> GetEmployees()
         {
-            string mess = "This is a message with a new line.\n";
+            //string mess = "This is a message with a new line.\n";
             //Console.Write("This is a message without a new line.");
             //return Ok(mess);
             return await _context.Employees.ToListAsync();
@@ -44,13 +44,23 @@ namespace EmployeeManagementApi.Controllers
 
         // POST: api/Employees
         [HttpPost]
-        public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
-        {
-            _context.Employees.Add(employee);
-            await _context.SaveChangesAsync();
+public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
+{
+    // Check if an employee with the same email already exists
+    var existingEmployee = await _context.Employees
+        .FirstOrDefaultAsync(e => e.Email == employee.Email);
 
-            return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, employee);
-        }
+    if (existingEmployee != null)
+    {
+        return Conflict(new { message = "Employee with this email already exists." });
+    }
+
+    _context.Employees.Add(employee);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, employee);
+}
+
 
         // PUT: api/Employees/5
         [HttpPut("{id}")]
